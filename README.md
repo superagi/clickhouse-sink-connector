@@ -119,3 +119,125 @@ to ClickHouse and analytic applications built on ClickHouse.
 ### Credits
 YourKit supports the Altinity Sink Connector and other open source projects with its full-featured Java Profiler.  Click the YourKit logo below to learn more.<br/>
 [![](https://www.yourkit.com/images/yklogo.png)](http://www.yourkit.com/java/profiler/index.jsp)<br/>
+
+
+[7 tools called]
+
+Here is a complete reference of all configuration parameters from the Altinity ClickHouse Sink Connector source code:
+
+## Complete Configuration Reference
+
+### ClickHouse Connection Settings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `clickhouse.server.url` | String | `localhost` | ClickHouse hostname |
+| `clickhouse.server.port` | Int | `8123` | ClickHouse HTTP port |
+| `clickhouse.server.user` | String | - | ClickHouse username |
+| `clickhouse.server.password` | String | - | ClickHouse password |
+| `clickhouse.server.database` | String | - | Target database name |
+
+### Buffer and Batching Settings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `buffer.count` | Long | `100` | Number of records to buffer before flush |
+| `buffer.flush.time.ms` | Long | `30000` (30s) | Time interval to flush buffer |
+| `buffer.flush.timeout.ms` | Long | `1000` | Timeout for flush operation |
+| `buffer.max.records` | Long | `100000` | Max records in buffer before forced flush |
+| `buffer.count.records` | - | `5000` | Alternative buffer count setting |
+
+### Thread Pool and Queue Settings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `thread.pool.size` | Int | `10` | Number of threads for batch processing |
+| `sink.connector.max.queue.size` | Int | `500000` | Maximum queue size |
+| `single.threaded` | Boolean | `false` | Run in single-threaded mode |
+
+### Connection Pool Settings (HikariCP)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `connection.pool.max.size` | Int | `500` | Max connections in pool |
+| `connection.pool.timeout` | Long | `50000` | Connection timeout (ms) |
+| `connection.pool.min.idle` | Int | `10` | Min idle connections |
+| `connection.pool.max.lifetime` | Long | `300000` | Max connection lifetime (ms) |
+| `connection.pool.disable` | Boolean | `false` | Disable connection pooling |
+
+### Deduplication Settings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `deduplication.policy` | String | `OFF` | Values: `OFF`, `OLD`, `NEW`. Controls in-memory deduplication |
+
+### Table Creation and Schema
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `auto.create.tables` | Boolean | `false` | Auto-create tables in ClickHouse |
+| `auto.create.tables.replicated` | Boolean | `false` | Create ReplicatedReplacingMergeTree tables |
+| `schema.evolution` | Boolean | `false` | Enable schema evolution (add columns) |
+
+### Kafka Metadata Storage
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `store.kafka.metadata` | Boolean | `false` | Store `_topic`, `_partition`, `_offset` columns |
+| `enable.kafka.offset` | Boolean | `false` | Store offsets in ClickHouse (instead of Kafka) |
+| `kafka.offset.metadata.table` | String | `topic_offset_metadata` | Table for offset storage |
+
+### Raw Data Storage
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `store.raw.data` | Boolean | `false` | Store raw JSON in a column |
+| `store.raw.data.column` | String | - | Column name for raw data |
+
+### Topic/Table Mapping
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `clickhouse.topic2table.map` | String | - | Format: `topic1:table1,topic2:table2` |
+| `clickhouse.database.override.map` | String | - | Format: `src_db:dest_db` |
+
+### Error Handling
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `errors.max.retries` | Int | `3` | Max retry attempts |
+| `error.logging.enable` | Boolean | `false` | Enable error logging to table |
+| `default.error.table` | String | `error_table` | Table for error records |
+| `ignore_delete` | Boolean | `false` | Ignore DELETE CDC events |
+
+### ReplacingMergeTree Settings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `replacingmergetree.delete.column` | String | `sign` | Column for delete sign (-1/1) |
+| `snowflake.id` | Boolean | `true` | Use snowflake ID for version columns |
+
+### JDBC Settings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `clickhouse.jdbc.params` | String | - | Format: `socket_timeout=10000,connection_timeout=100` |
+| `clickhouse.jdbc.settings` | String | - | ClickHouse settings for JDBC |
+
+### Timezone Settings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `database.connectionTimeZone` | String | - | Source DB timezone |
+| `clickhouse.datetime.timezone` | String | - | ClickHouse DateTime timezone |
+
+### Replication History
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `replication.history.enable` | Boolean | `false` | Enable history tracking |
+| `replication.history.table.name` | String | `history` | History table name |
+| `replication.history.database.name` | String | `binlog_history` | History database |
+| `replication.history.ttl` | Int | `30` | TTL in days |
+
+---
