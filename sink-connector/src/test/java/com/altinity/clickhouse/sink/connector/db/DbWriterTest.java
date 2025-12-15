@@ -55,7 +55,10 @@ public class DbWriterTest {
         String password = "";
         String tableName = "employees";
 
-        ClickHouseSinkConnectorConfig config= new ClickHouseSinkConnectorConfig(new HashMap<>());
+        Map<String, String> props = new HashMap<>();
+        // Set a valid Debezium connector class so ConnectorType resolves correctly in tests.
+        props.put("connector.class", "io.debezium.connector.mysql.MySqlConnector");
+        ClickHouseSinkConnectorConfig config= new ClickHouseSinkConnectorConfig(props);
         String jdbcUrl = BaseDbWriter.getConnectionString(hostName, port, database);
         Connection conn = DbWriter.createConnection(jdbcUrl, BaseDbWriter.DATABASE_CLIENT_NAME, userName, password,
                 BaseDbWriter.SYSTEM_DB, config);

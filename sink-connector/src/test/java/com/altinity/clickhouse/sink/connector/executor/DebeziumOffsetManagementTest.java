@@ -8,6 +8,7 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -16,6 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 public class DebeziumOffsetManagementTest {
+
+    @BeforeEach
+    public void setup() {
+        DebeziumOffsetManagement.clearState();
+    }
 
     // Test function to validate the isWithinRange function
     @Test
@@ -90,7 +96,7 @@ public class DebeziumOffsetManagementTest {
     public void testCalculateMinMaxTimestampFromBatch() {
         // Test to validate DebeziumOffsetManagement calculateMinMaxTimestampFromBatch function
         // Create batch timestamps map.
-        Map<Pair<Long, Long>, List<ClickHouseStruct>> batchTimestamps = new HashMap();
+        Map<Pair<Long, Long>, List<ClickHouseStruct>> batchTimestamps = new HashMap<>();
         List<ClickHouseStruct> clickHouseStructs = new ArrayList<>();
         ClickHouseStruct ch1 = new ClickHouseStruct(10, "SERVER5432.test.customers", getKafkaStruct(), 2, 21L, null, getKafkaStruct(), null, ClickHouseConverter.CDC_OPERATION.CREATE);
         ch1.setDebezium_ts_ms(21L);
@@ -119,6 +125,33 @@ public class DebeziumOffsetManagementTest {
         Assert.assertTrue(result.getLeft() == 3L);
         Assert.assertTrue(result.getRight() == 433L);
 
+    }
+
+    @Test
+    public void testCheckIfBatchCanBeCommittedClearsInflightAndReturnsTrue() throws InterruptedException {
+        List<ClickHouseStruct> batch1 = new ArrayList<>();
+        ClickHouseStruct b1r1 = new ClickHouseStruct(1, "SERVER5432.test.customers", getKafkaStruct(), 2, 10L, null, getKafkaStruct(), null, ClickHouseConverter.CDC_OPERATION.CREATE);
+        b1r1.setDebezium_ts_ms(10L);
+        batch1.add(b1r1);
+
+        List<ClickHouseStruct> batch2 = new ArrayList<>();
+        ClickHouseStruct b2r1 = new ClickHouseStruct(2, "SERVER5432.test.customers", getKafkaStruct(), 2, 12L, null, getKafkaStruct(), null, ClickHouseConverter.CDC_OPERATION.CREATE);
+        b2r1.setDebezium_ts_ms(12L);
+        batch2.add(b2r1);
+
+        DebeziumOffsetManagement.addToBatchTimestamps(batch1);
+        DebeziumOffsetManagement.addToBatchTimestamps(batch2);
+
+        // Process batch2 first so it overlaps batch1 (max 12 > min 10)
+        boolean r2 = DebeziumOffsetManagement.checkIfBatchCanBeCommitted(batch2);
+        // Overlap should defer commit
+        Assert.assertFalse(r2);
+        // Now process batch1; should commit both
+        boolean r1 = DebeziumOffsetManagement.checkIfBatchCanBeCommitted(batch1);
+
+        Assert.assertTrue(r1);
+        Assert.assertTrue(DebeziumOffsetManagement.getInFlightBatches().isEmpty());
+        Assert.assertTrue(DebeziumOffsetManagement.getCompletedBatches().isEmpty());
     }
     public static Struct getKafkaStruct() {
         Schema kafkaConnectSchema = SchemaBuilder
