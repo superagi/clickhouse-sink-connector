@@ -29,27 +29,15 @@ public class DebeziumOffsetManagement {
      * Pair of minimum and maximum timestamps, and the value is the list of
      * corresponding ClickHouseStruct records.
      */
-    static ConcurrentHashMap<Pair<Long, Long>, List<ClickHouseStruct>>
+    private static final ConcurrentHashMap<Pair<Long, Long>, List<ClickHouseStruct>>
             inFlightBatches = new ConcurrentHashMap<>();
 
     /**
      * A concurrent map holding the completed batches. Once a batch is
      * fully processed, it is moved from inFlightBatches to completedBatches.
      */
-    static ConcurrentHashMap<Pair<Long, Long>, List<ClickHouseStruct>>
+    private static final ConcurrentHashMap<Pair<Long, Long>, List<ClickHouseStruct>>
             completedBatches = new ConcurrentHashMap<>();
-
-    /**
-     * Constructor to initialize DebeziumOffsetManagement with a provided
-     * in-flight batch map.
-     *
-     * @param inFlightBatches A map containing the in-flight batches.
-     */
-    public DebeziumOffsetManagement(
-            ConcurrentHashMap<Pair<Long, Long>, List<ClickHouseStruct>>
-                    inFlightBatches) {
-        this.inFlightBatches = inFlightBatches;
-    }
 
     /**
      * Adds the given batch's timestamp range to the in-flight batches map.
@@ -70,7 +58,7 @@ public class DebeziumOffsetManagement {
      *
      * @param pair The Pair of minimum and maximum timestamps.
      */
-    public void removeFromBatchTimestamps(Pair<Long, Long> pair) {
+    public static void removeFromBatchTimestamps(Pair<Long, Long> pair) {
         inFlightBatches.remove(pair);
     }
 
@@ -79,7 +67,7 @@ public class DebeziumOffsetManagement {
      *
      * @return A map of timestamp pairs to their associated record lists.
      */
-    public Map<Pair<Long, Long>, List<ClickHouseStruct>> getBatchTimestamps() {
+    public static Map<Pair<Long, Long>, List<ClickHouseStruct>> getBatchTimestamps() {
         return inFlightBatches;
     }
 
@@ -112,7 +100,7 @@ public class DebeziumOffsetManagement {
      * @param currentBatch A list of ClickHouseStruct records.
      * @return true if there is an overlap; false otherwise.
      */
-    static boolean checkIfThereAreInflightRequests(
+    public static boolean checkIfThereAreInflightRequests(
             List<ClickHouseStruct> currentBatch) {
         boolean result = false;
         Pair<Long, Long> currentBatchPair =
@@ -175,6 +163,28 @@ public class DebeziumOffsetManagement {
             });
         }
         return result;
+    }
+
+    /**
+     * Used by tests to clear all tracking state.
+     */
+    public static void clearState() {
+        inFlightBatches.clear();
+        completedBatches.clear();
+    }
+
+    /**
+     * Expose in-flight batches for tests.
+     */
+    public static Map<Pair<Long, Long>, List<ClickHouseStruct>> getInFlightBatches() {
+        return inFlightBatches;
+    }
+
+    /**
+     * Expose completed batches for tests.
+     */
+    public static Map<Pair<Long, Long>, List<ClickHouseStruct>> getCompletedBatches() {
+        return completedBatches;
     }
 
     /**

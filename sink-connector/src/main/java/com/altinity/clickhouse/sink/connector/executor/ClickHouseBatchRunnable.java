@@ -105,7 +105,7 @@ public class ClickHouseBatchRunnable implements Runnable {
         this.records = records;
         this.config = config;
         if (topic2TableMap == null) {
-            this.topic2TableMap = new HashMap();
+            this.topic2TableMap = new HashMap<>();
         } else {
             this.topic2TableMap = topic2TableMap;
         }
@@ -346,9 +346,12 @@ public class ClickHouseBatchRunnable implements Runnable {
                 }
                 if (result) {
                     // Step 2: Check if the batch can be committed.
-                    if(DebeziumOffsetManagement.checkIfBatchCanBeCommitted(currentBatch)) {
-                        currentBatch = null;
+                    boolean committed = DebeziumOffsetManagement.checkIfBatchCanBeCommitted(currentBatch);
+                    if(!committed) {
+                        log.info("Batch offsets pending commit due to overlap; will continue with next batch");
                     }
+                    // Avoid re-processing the same batch; offsets will be committed later when safe.
+                    currentBatch = null;
                 }
                 Thread.sleep(config.getLong(
                         ClickHouseSinkConnectorConfigVariables.
